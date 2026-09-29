@@ -23,6 +23,6 @@ The program will also be evaluated with varying numbers of trees and varying sub
 ## Test Data
 To evaluate the technique, we will be using two of the statistical datasets that Liu, Ting, and Zhou used in their paper: hbk and wood [2]. Both datasets can be found [here](https://gist.github.com/yohanesnuwara/fc1b9400d8db96bfc2690f7224690ce5).
  
-References
-[1] Lui,F. T., Ting, K. M. and Zhou, Z, -H. 2012. Isolation-based anomaly detection. ACM Trans. Knowl. Discov. Data 6,1, Article 3(March 2012), 39 pages. DOI = 10.1145/2133360.2133363 http://doi.acm.org/10.1145/2133360.2133363
+## References
+[1] Lui,F. T., Ting, K. M. and Zhou, Z, -H. 2012. Isolation-based anomaly detection. ACM Trans. Knowl. Discov. Data 6,1, Article 3(March 2012), 39 pages. DOI = 10.1145/2133360.2133363 http://doi.acm.org/10.1145/2133360.2133363  
 [2] P. J. Rousseeuw and A. M. Leroy. 1987. Robust regression and outlier detection. John Wiley & Sons, Inc., USA.
