@@ -2,9 +2,7 @@ import random
 import numpy as np
 import pandas as pd
 
-# In the training stage, iTrees are constructed by recursively partitioning a subsample
-# X′ until all instances are isolated. 
-# Details of the training stage can be found in Algorithms 1 and 2. 
+# In the training stage, iTrees are constructed by recursively partitioning a subsample X′ until all instances are isolated. 
 # Each iTree is constructed using a subsample X′ randomly selected without replacement from X , X′ ⊂ X
 
 
@@ -23,21 +21,20 @@ def iForest(X, t = 100, s = 256): # Paper uses default 100 trees and 2^8 subsamp
 # Inputs: X ′ - input data
 # Output: an iTree
 def iTree(X):
-    # if X′ cannot be divided then
-    if len(X) <= 1:
-    #   return exNode{Size ← |X′|}
+    if len(X.index) <= 1: # if X′ cannot be divided then
+        # return exNode{Size ← |X′|}
         return exNode{Size ← |X|} #TODO: What does this mean?
-    # else
     else:
-    #   let Q be a list of attributes in X′
-    #   randomly select an attribute q ∈ Q
-        q = random.choice(X.index)
-    #   randomly select a split point p between the max and min values of attribute q in X′
+        # let Q be a list of attributes in X′
+        # randomly select an attribute q ∈ Q
+        q = random.choice(X.columns.to_list())
+        # randomly select a split point p between the max and min values of attribute q in X′
         p = random.randrange(X[q].min(), X[q].max())
         Xl = X[X[q] <= p] # Xl ← filter(X′, q < p)
         Xr = X[X[q] > p] # Xr ← filter(X′, q ≥ p)
 
-        iTreeDict = {"left": Xl, 
+        iTreeDict = {
+                "left": Xl, 
                 "right": Xr, 
                 "splitAtt": q,
                 "splitValue": p
