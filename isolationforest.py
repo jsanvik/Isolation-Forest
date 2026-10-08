@@ -23,19 +23,21 @@ def iForest(X, t = 100, s = 256): # Paper uses default 100 trees and 2^8 subsamp
 def iTree(X):
     if len(X.index) <= 1: # if X′ cannot be divided then
         # return exNode{Size ← |X′|}
-        return exNode{Size ← |X|} #TODO: What does this mean?
+        return {
+            "type": "external",
+            "size": len(X)}  ##return exNode{Size ← |X|} #TODO: What does this mean?
     else:
         # let Q be a list of attributes in X′
         # randomly select an attribute q ∈ Q
         q = random.choice(X.columns.to_list())
         # randomly select a split point p between the max and min values of attribute q in X′
         p = random.randrange(X[q].min(), X[q].max())
-        Xl = X[X[q] <= p] # Xl ← filter(X′, q < p)
-        Xr = X[X[q] > p] # Xr ← filter(X′, q ≥ p)
+        Xl = X[X[q] < p] # Xl ← filter(X′, q < p)
+        Xr = X[X[q] >= p] # Xr ← filter(X′, q ≥ p)
 
         iTreeDict = {
-                "left": Xl, 
-                "right": Xr, 
+                "left": iTree(Xl), 
+                "right": iTree(Xr), 
                 "splitAtt": q,
                 "splitValue": p
                 }
@@ -48,12 +50,18 @@ def iTree(X):
 # Output: path length of x
 def PathLength(x, T, hlim, e):
     # if T is an external node or e ≥ hlim then
-    #   return e + c(T.size) {c(.) is defined in Equation 1}
+    if T["type"] == "external" or e >= hlim:
+        return e + c(T["size"])
+    #   return e + c(T.size) {c(.) is defined in Equation 1} (Need to implement c(.))
     # end if
     # a ← T.splitAtt
+    a = T["splitAtt"]
     # if xa < T.splitValue then
-    #   return PathLength(x, T.left, hlim, e + 1)
+    if x[a] < T["splitValue"]:
+        return PathLength(x, T["left"], hlim, e + 1)
+    #return PathLength(x, T.left, hlim, e + 1)
     # else {xa ≥ T.splitValue}
+    else:
+        return PathLength(x, T["right"], hlim, e + 1)
     #   return PathLength(x, T.right, hlim, e + 1)
-    # end if
-    pass
+    # end 
