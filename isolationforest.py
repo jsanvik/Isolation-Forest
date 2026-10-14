@@ -36,6 +36,7 @@ def iTree(X):
         Xr = X[X[q] >= p] # Xr ← filter(X′, q ≥ p)
 
         iTreeDict = {
+                "type": "internal",
                 "left": iTree(Xl), 
                 "right": iTree(Xr), 
                 "splitAtt": q,
@@ -65,3 +66,13 @@ def PathLength(x, T, hlim, e):
         return PathLength(x, T["right"], hlim, e + 1)
     #   return PathLength(x, T.right, hlim, e + 1)
     # end 
+
+# c(.) from equation 1
+def c(n):
+    if n > 2:
+        H = np.log(n - 1) + 0.5772156649
+        return 2 * H - (2 * (n - 1) / n)
+    elif n == 2:
+        return 1
+    else:
+        return 0
