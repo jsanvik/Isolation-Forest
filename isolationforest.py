@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
+import math
 import statistics
 from pathlib import Path
 import os
@@ -82,24 +83,25 @@ def c(n):
         return 0
 
 # The anomaly score s of an instance x is defined as:
-# s(x, ψ) = 2 - ( (E(h(x))/c(ψ)) )
+# s(x, ψ) = 2 ** ( -(E(h(x))/c(ψ)) )
 # where E(h(x)) is the average of h(x) from a collection of iTrees.
 
 # Inputs: X - an instance (Pandas Dataframe) T - collection of iTrees (list) (int) ψ (s) - subsampling size (int)
 def anomaly_score(x, T, s = 2**8):
     # E(h(x)) is the average of h(x) from a collection of iTrees.
     e = statistics.mean([PathLength(x, T, hlim) for T in forest]) # E(h(x)) is the average h(x) from a collection of itrees
-    return 2 - (e/c(s))
+    return 2 ** (-e/c(s))
 
 if __name__ == "__main__":
 
     # Read in dataset
-    dataset = "hbk" # options: "hbk", "wood"
-    directory = Path(os.getcwd())
-    data = pd.read_csv(directory / "data" / f"{dataset}.csv", index_col=0)
+    dataset = "wood" # options: "hbk", "wood"
+    directory = Path.home()/"Downloads"
+
+    data = pd.read_csv(directory / f"{dataset}.csv", index_col=0)
     hlim = 1000 # TODO: What tree height limit should be chosen?
     
-    anomaly_threshold = 0.6 # TODO: What anomaly threshold should be chosen?
+    anomaly_threshold = 0.53 # TODO: What anomaly threshold should be chosen?
 
     # (i) If instances return s very close to 1, then they are definitely anomalies,
     # (ii) If instances have s much smaller than 0.5, then they are quite safe to be regarded as normal instances, and
