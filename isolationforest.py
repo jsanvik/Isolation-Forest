@@ -94,6 +94,11 @@ def anomaly_score(x, T, s = 2**8):
 
 if __name__ == "__main__":
 
+    RANDOM_SEED = 4660
+
+    # Set random seed
+    random.seed(RANDOM_SEED)
+
     # Read in dataset
     dataset = "wood" # options: "hbk", "wood"
     directory = Path.home()/"Downloads"
@@ -136,5 +141,7 @@ if __name__ == "__main__":
 
     print(data)
     print("Predicted anomalies:", data[data["Anomaly_pred"] == 1].index.to_list())
+    print("Actual anomalies:", data[data["Anomaly_actual"] == 1].index.to_list())
+
 
     print("\n","END OF PROGRAM")
