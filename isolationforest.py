@@ -5,7 +5,8 @@ import math
 import statistics
 from pathlib import Path
 import os
-
+import time
+import matplotlib.pyplot as plt
 # In the training stage, iTrees are constructed by recursively partitioning a subsample X′ until all instances are isolated. 
 # Each iTree is constructed using a subsample X′ randomly selected without replacement from X , X′ ⊂ X
 
@@ -100,28 +101,48 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     # Read in dataset
-    dataset = "wood" # options: "hbk", "wood"
+    dataset = "hbk" # options: "hbk", "wood"
     directory = Path.home()/"Downloads"
 
     data = pd.read_csv(directory / f"{dataset}.csv", index_col=0)
-    hlim = 1000 # TODO: What tree height limit should be chosen?
+    hlim = 255 # TODO: What tree height limit should be chosen?
+    # 
     
     anomaly_threshold = 0.53 # TODO: What anomaly threshold should be chosen?
 
     # (i) If instances return s very close to 1, then they are definitely anomalies,
     # (ii) If instances have s much smaller than 0.5, then they are quite safe to be regarded as normal instances, and
     # (iii) If all the instances return s ≈ 0.5, then the entire sample does not really have any distinct anomaly.
+  
 
-    # Build forest
+    start_time = time.perf_counter()
+# Build forest
+
     forest = iForest(data, s=2**3) # 100 trees, 2^3 sampling size (default 2^8 too large for our datasets)
+
+#processing time for forest construction
+    end_time = time.perf_counter()
+    forest_time = end_time-start_time
 
     # Get anomaly scores for points
     anomaly_scores = [] # List of all anomaly scores (to be added to DataFrame)
+
+    start_time = time.perf_counter()
+    
     for index, x in data.iterrows():
         # print(x)
         x = pd.Series(x, index=data.columns)
         score = anomaly_score(x, forest, s=2**3)
         anomaly_scores.append(score)
+#processing time for anamaly detection
+    detection_end_time = time.perf_counter()
+    detection_time = detection_end_time - start_time
+# total processing time 
+    total_time = forest_time + detection_time
+    print("Processing Time :")
+    print("Forest construction time: ", forest_time,"seconds")
+    print("Anomaly Detection Time: ", detection_time,"seconds")
+    print("Total Processing Time: ", total_time,"seconds")
 
     anomalies = [1 if score >= anomaly_threshold else 0 for score in anomaly_scores] # 1 if anomaly else 0 (to be added to DataFrame)
     
@@ -141,7 +162,19 @@ if __name__ == "__main__":
 
     print(data)
     print("Predicted anomalies:", data[data["Anomaly_pred"] == 1].index.to_list())
-    print("Actual anomalies:", data[data["Anomaly_actual"] == 1].index.to_list())
+    print("Actual anomalies:   ", data[data["Anomaly_actual"] == 1].index.to_list())
 
 
+
+   #graph for cluster visual 
+    plt.figure(figsize=(8, 5))
+
+    plt.scatter(range(1, len(anomaly_scores) + 1), anomaly_scores)
+
+    plt.xlabel("Observation Number")
+    plt.ylabel("Anomaly Score")
+    plt.title("Anomaly Scores for Each Observation")
+
+    plt.show()
+    
     print("\n","END OF PROGRAM")
