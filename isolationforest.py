@@ -114,7 +114,9 @@ def auc(results):
 
 if __name__ == "__main__":
 
-    # Read in results DataFrame
+    # Read in results DataFrame    
+    directory = Path(os.getcwd())
+    results = pd.read_csv(directory / "data" / f"results.csv")
 
     RANDOM_SEED = 4660
 
@@ -125,9 +127,8 @@ if __name__ == "__main__":
     
     for dataset in datasets:
         # Read in dataset
-        directory = Path.home()/"Downloads"
+        data = pd.read_csv(directory / "data" / f"{dataset}.csv", index_col=0)
 
-        data = pd.read_csv(directory / f"{dataset}.csv", index_col=0)
 
         hlim = 255 # TODO: What tree height limit should be chosen?
         
@@ -193,8 +194,10 @@ if __name__ == "__main__":
 
         # graph for cluster visual 
         plt.figure(figsize=(8, 5))
+        plt.axhline(anomaly_threshold, linestyle='--', alpha=0.5, c='k', label='Anomaly Threshold')
+        plt.legend()
 
-        plt.scatter(range(1, len(anomaly_scores) + 1), anomaly_scores, alpha=0.7)
+        plt.scatter(range(1, len(anomaly_scores) + 1), anomaly_scores, alpha=0.7, c=data["Anomaly_actual"])
 
         plt.xlabel("Observation Number")
         plt.ylabel("Anomaly Score")
@@ -205,5 +208,11 @@ if __name__ == "__main__":
         # Export results
         data["Dataset"] = dataset
         data["Random Seed"] = RANDOM_SEED
-        
+        data["AUC"] = auc
+        results_columns = ["Anomaly Score", "Anomaly_pred", "Anomaly_actual", "Dataset", "Random Seed", "AUC"]
+        data = data[results_columns]
+
+        results = pd.concat([results, data])
+    
+    results.to_csv(directory / "data" / f"results.csv")    
     print("\n","END OF PROGRAM")
