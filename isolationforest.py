@@ -207,10 +207,10 @@ if __name__ == "__main__":
         plt.show()
 
         # Update results
-        results.loc[(dataset,RANDOM_SEED,ntrees,hlim), "AUC"] = auc
-        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Forest Construction Time"] = forest_time
-        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Anomaly Detection Time"] = detection_time
-        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Total Processing Time"] = total_time
+        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "AUC"] = auc(data)
+        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Forest Construction Time"] = forest_time
+        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Anomaly Detection Time"] = detection_time
+        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Total Processing Time"] = total_time
 
 
     
