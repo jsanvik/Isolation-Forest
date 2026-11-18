@@ -116,21 +116,22 @@ if __name__ == "__main__":
 
     # Read in results DataFrame    
     directory = Path(os.getcwd())
-    results = pd.read_csv(directory / "data" / f"results.csv")
+    results = pd.read_csv(directory / "data" / f"results.csv", index_col=["Dataset", "Random Seed", "ntrees", "hlim"])
 
     RANDOM_SEED = 4660
 
     # Set random seed
-    random.seed(RANDOM_SEED)
+    random.seed(RANDOM_SEED) # TODO: Fix random seed so results are always the same
 
     datasets = ["hbk", "wood"]
     
     for dataset in datasets:
         # Read in dataset
-        data = pd.read_csv(directory / "data" / f"{dataset}.csv", index_col=0)
+        data = pd.read_csv(directory / "data" / f"{dataset}.csv", header=0, index_col=[])
 
-
+        ntries = 10 # TODO: Implement loop that runs multiple times, using a different random seed for each
         hlim = 255 # TODO: What tree height limit should be chosen?
+        ntrees = 100
         
         anomaly_threshold = 0.53 # TODO: What anomaly threshold should be chosen?
 
@@ -143,7 +144,7 @@ if __name__ == "__main__":
         
         # Build forest
 
-        forest = iForest(data, s=2**3) # 100 trees, 2^3 sampling size (default 2^8 too large for our datasets)
+        forest = iForest(data, t = ntrees, s=2**3) # 100 trees, 2^3 sampling size (default 2^8 too large for our datasets)
 
         # processing time for forest construction
         end_time = time.perf_counter()
@@ -201,18 +202,17 @@ if __name__ == "__main__":
 
         plt.xlabel("Observation Number")
         plt.ylabel("Anomaly Score")
-        plt.title("Anomaly Scores for Each Observation")
+        plt.title(f"Anomaly Scores for Each Observation (DATASET: {dataset})")
 
         plt.show()
 
-        # Export results
-        data["Dataset"] = dataset
-        data["Random Seed"] = RANDOM_SEED
-        data["AUC"] = auc
-        results_columns = ["Anomaly Score", "Anomaly_pred", "Anomaly_actual", "Dataset", "Random Seed", "AUC"]
-        data = data[results_columns]
+        # Update results
+        results.loc[(dataset,RANDOM_SEED,ntrees,hlim), "AUC"] = auc
+        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Forest Construction Time"] = forest_time
+        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Anomaly Detection Time"] = detection_time
+        results.loc[dataset,RANDOM_SEED,ntrees,hlim]["Total Processing Time"] = total_time
 
-        results = pd.concat([results, data])
+
     
     results.to_csv(directory / "data" / f"results.csv")    
     print("\n","END OF PROGRAM")
