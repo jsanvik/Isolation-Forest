@@ -118,101 +118,114 @@ if __name__ == "__main__":
     directory = Path(os.getcwd())
     results = pd.read_csv(directory / "data" / f"results.csv", index_col=["Dataset", "Random Seed", "ntrees", "hlim"])
 
-    RANDOM_SEED = 4660
+    ntries = 5
+    single_experiment = False
 
-    # Set random seed
-    random.seed(RANDOM_SEED) # TODO: Fix random seed so results are always the same
+    if single_experiment:
+        iterations = {
+            "dataset" : ["hbk", "wood"],
+            "hlim" : [255],
+            "ntrees" :  [100],
+            "seed" : list(range(ntries))
+        }
+    else:
+        iterations = {
+            "dataset" : ["hbk", "wood"],
+            "hlim" : [50, 100, 255, 500],
+            "ntrees" :  [25, 50, 75, 100, 200, 500, 1000],
+            "seed" : list(range(ntries))
+        }
 
-    datasets = ["hbk", "wood"]
     
-    for dataset in datasets:
-        # Read in dataset
-        data = pd.read_csv(directory / "data" / f"{dataset}.csv", header=0, index_col=[])
+    for dataset in iterations["dataset"]:
+        for seed in iterations["seed"]:
+            # Set random seed
+            random.seed(seed) # TODO: Fix random seed so results are always the same
+            for ntrees in iterations["ntrees"]:
+                for hlim in iterations["hlim"]:
+                    # Read in dataset
+                    data = pd.read_csv(directory / "data" / f"{dataset}.csv", header=0, index_col=[])
+                    
+                    anomaly_threshold = 0.53
 
-        ntries = 10 # TODO: Implement loop that runs multiple times, using a different random seed for each
-        hlim = 255 # TODO: What tree height limit should be chosen?
-        ntrees = 100
-        
-        anomaly_threshold = 0.53 # TODO: What anomaly threshold should be chosen?
+                    # (i) If instances return s very close to 1, then they are definitely anomalies,
+                    # (ii) If instances have s much smaller than 0.5, then they are quite safe to be regarded as normal instances, and
+                    # (iii) If all the instances return s ≈ 0.5, then the entire sample does not really have any distinct anomaly.
+                
 
-        # (i) If instances return s very close to 1, then they are definitely anomalies,
-        # (ii) If instances have s much smaller than 0.5, then they are quite safe to be regarded as normal instances, and
-        # (iii) If all the instances return s ≈ 0.5, then the entire sample does not really have any distinct anomaly.
-    
+                    start_time = time.perf_counter()
+                    
+                    # Build forest
 
-        start_time = time.perf_counter()
-        
-        # Build forest
+                    forest = iForest(data, t = ntrees, s=2**3) # 2^3 sampling size (default 2^8 too large for our datasets)
 
-        forest = iForest(data, t = ntrees, s=2**3) # 100 trees, 2^3 sampling size (default 2^8 too large for our datasets)
+                    # processing time for forest construction
+                    end_time = time.perf_counter()
+                    forest_time = end_time-start_time
 
-        # processing time for forest construction
-        end_time = time.perf_counter()
-        forest_time = end_time-start_time
+                    # Get anomaly scores for points
+                    anomaly_scores = [] # List of all anomaly scores (to be added to DataFrame)
 
-        # Get anomaly scores for points
-        anomaly_scores = [] # List of all anomaly scores (to be added to DataFrame)
+                    start_time = time.perf_counter()
+                    
+                    for index, x in data.iterrows():
+                        x = pd.Series(x, index=data.columns)
+                        score = anomaly_score(x, forest, s=2**3)
+                        anomaly_scores.append(score)
+                    # processing time for anamaly detection
+                    detection_end_time = time.perf_counter()
+                    detection_time = detection_end_time - start_time
+                    # total processing time 
+                    total_time = forest_time + detection_time
 
-        start_time = time.perf_counter()
-        
-        for index, x in data.iterrows():
-            # print(x)
-            x = pd.Series(x, index=data.columns)
-            score = anomaly_score(x, forest, s=2**3)
-            anomaly_scores.append(score)
-        # processing time for anamaly detection
-        detection_end_time = time.perf_counter()
-        detection_time = detection_end_time - start_time
-        # total processing time 
-        total_time = forest_time + detection_time
-        print("Processing Time :")
-        print("Forest construction time: ", forest_time,"seconds")
-        print("Anomaly Detection Time: ", detection_time,"seconds")
-        print("Total Processing Time: ", total_time,"seconds")
+                    # Only print results if we're doing one single experiment
+                    if single_experiment:
+                        print("Processing Time :")
+                        print("Forest construction time: ", forest_time,"seconds")
+                        print("Anomaly Detection Time: ", detection_time,"seconds")
+                        print("Total Processing Time: ", total_time,"seconds")
 
-        anomalies = [1 if score >= anomaly_threshold else 0 for score in anomaly_scores] # 1 if anomaly else 0 (to be added to DataFrame)
-        
-        data["Anomaly Score"] = anomaly_scores
-        data["Anomaly_pred"] = anomalies
+                    anomalies = [1 if score >= anomaly_threshold else 0 for score in anomaly_scores] # 1 if anomaly else 0 (to be added to DataFrame)
+                    
+                    data["Anomaly Score"] = anomaly_scores
+                    data["Anomaly_pred"] = anomalies
 
-        # Known actual anomalies
-        if dataset == "wood": # [4, 6, 8, 19]
-            data["Anomaly_actual"] = [1 if i+1 in [4, 6, 8, 19] else 0 for i, score in enumerate(anomaly_scores)]
-        elif dataset == "hbk": # First 14 observations are anomalies
-            data["Anomaly_actual"] = [1 if i+1 in list(range(1, 15)) else 0 for i, score in enumerate(anomaly_scores)]
-            
-        print("ANOMALY SCORES:")
-        
-        for idx, row in data.iterrows():
-            print(idx, row["Anomaly Score"])
+                    # Known actual anomalies
+                    if dataset == "wood": # [4, 6, 8, 19]
+                        data["Anomaly_actual"] = [1 if i+1 in [4, 6, 8, 19] else 0 for i, score in enumerate(anomaly_scores)]
+                    elif dataset == "hbk": # First 14 observations are anomalies
+                        data["Anomaly_actual"] = [1 if i+1 in list(range(1, 15)) else 0 for i, score in enumerate(anomaly_scores)]
 
-        print(data)
-        print("Predicted anomalies:", data[data["Anomaly_pred"] == 1].index.to_list())
-        print("Actual anomalies:   ", data[data["Anomaly_actual"] == 1].index.to_list())
-        print("AUC:                ", auc(data) )
+                    # Only print results if we're only doing one iteration
+                    if single_experiment:    
+                        print("ANOMALY SCORES:")
+                        
+                        for idx, row in data.iterrows():
+                            print(idx, row["Anomaly Score"])
 
+                        print(data)
+                        print("Predicted anomalies:", data[data["Anomaly_pred"] == 1].index.to_list())
+                        print("Actual anomalies:   ", data[data["Anomaly_actual"] == 1].index.to_list())
+                        print("AUC:                ", auc(data) )
 
+                        # graph for cluster visual 
+                        plt.figure(figsize=(8, 5))
+                        plt.axhline(anomaly_threshold, linestyle='--', alpha=0.5, c='k', label='Anomaly Threshold')
+                        plt.legend()
 
-        # graph for cluster visual 
-        plt.figure(figsize=(8, 5))
-        plt.axhline(anomaly_threshold, linestyle='--', alpha=0.5, c='k', label='Anomaly Threshold')
-        plt.legend()
+                        plt.scatter(range(1, len(anomaly_scores) + 1), anomaly_scores, alpha=0.7, c=data["Anomaly_actual"])
 
-        plt.scatter(range(1, len(anomaly_scores) + 1), anomaly_scores, alpha=0.7, c=data["Anomaly_actual"])
+                        plt.xlabel("Observation Number")
+                        plt.ylabel("Anomaly Score")
+                        plt.title(f"Anomaly Scores for Each Observation (DATASET: {dataset})")
 
-        plt.xlabel("Observation Number")
-        plt.ylabel("Anomaly Score")
-        plt.title(f"Anomaly Scores for Each Observation (DATASET: {dataset})")
+                        plt.show()
 
-        plt.show()
-
-        # Update results
-        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "AUC"] = auc(data)
-        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Forest Construction Time"] = forest_time
-        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Anomaly Detection Time"] = detection_time
-        results.at[(dataset,RANDOM_SEED,ntrees,hlim), "Total Processing Time"] = total_time
-
-
+                    # Update results
+                    results.at[(dataset,seed,ntrees,hlim), "AUC"] = auc(data)
+                    results.at[(dataset,seed,ntrees,hlim), "Forest Construction Time"] = forest_time
+                    results.at[(dataset,seed,ntrees,hlim), "Anomaly Detection Time"] = detection_time
+                    results.at[(dataset,seed,ntrees,hlim), "Total Processing Time"] = total_time
     
     results.to_csv(directory / "data" / f"results.csv")    
     print("\n","END OF PROGRAM")
