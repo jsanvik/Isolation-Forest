@@ -42,6 +42,7 @@ def iTree(X):
 
         iTreeDict = {
                 "type": "internal",
+                "size": len(X),
                 "left": iTree(Xl), 
                 "right": iTree(Xr), 
                 "splitAtt": str(q),
@@ -116,9 +117,9 @@ if __name__ == "__main__":
 
     # Read in results DataFrame    
     directory = Path(os.getcwd())
-    results = pd.read_csv(directory / "data" / f"results.csv", index_col=["Dataset", "Random Seed", "ntrees", "hlim"])
-
-    ntries = 5
+    results = pd.read_csv(directory / "Data" / f"results.csv", index_col=["Dataset", "Random Seed", "ntrees", "hlim"])
+    
+    ntries = 1
     single_experiment = False
 
     if single_experiment:
@@ -131,9 +132,9 @@ if __name__ == "__main__":
     else:
         iterations = {
             "dataset" : ["hbk", "wood"],
-            "hlim" : [50, 100, 255, 500],
-            "ntrees" :  [25, 50, 75, 100, 200, 500, 1000],
-            "seed" : list(range(ntries))
+            "hlim" : list(range(1,10,2)),
+            "ntrees" :  [50, 75, 100, 500, 1000],
+            "seed" : [1]
         }
 
     
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             for ntrees in iterations["ntrees"]:
                 for hlim in iterations["hlim"]:
                     # Read in dataset
-                    data = pd.read_csv(directory / "data" / f"{dataset}.csv", header=0, index_col=[])
+                    data = pd.read_csv(directory / "Data" / f"{dataset}.csv", header=0, index_col=[])
                     
                     anomaly_threshold = 0.53
 
@@ -227,5 +228,6 @@ if __name__ == "__main__":
                     results.at[(dataset,seed,ntrees,hlim), "Anomaly Detection Time"] = detection_time
                     results.at[(dataset,seed,ntrees,hlim), "Total Processing Time"] = total_time
     
-    results.to_csv(directory / "data" / f"results.csv")    
+    results.to_csv(directory / "Data" / f"results.csv")    
+    
     print("\n","END OF PROGRAM")
