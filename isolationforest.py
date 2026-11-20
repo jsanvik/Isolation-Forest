@@ -119,7 +119,7 @@ if __name__ == "__main__":
     directory = Path(os.getcwd())
     results = pd.read_csv(directory / "Data" / f"results.csv", index_col=["Dataset", "Random Seed", "ntrees", "hlim"])
     
-    ntries = 1
+    ntries = 5
     single_experiment = False
 
     if single_experiment:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     for dataset in iterations["dataset"]:
         for seed in iterations["seed"]:
             # Set random seed
-            random.seed(seed) # TODO: Fix random seed so results are always the same
+            random.seed(seed) 
             for ntrees in iterations["ntrees"]:
                 for hlim in iterations["hlim"]:
                     # Read in dataset
